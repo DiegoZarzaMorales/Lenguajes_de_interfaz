@@ -1,0 +1,73 @@
+        .data
+msg_prompt1:    .asciz "Ingresa el primer número: " // Mensaje para solicitar el primer número al usuario
+msg_prompt2:    .asciz "Ingresa el segundo número: " // Mensaje para solicitar el segundo número al usuario
+msg_sum:        .asciz "Suma: %ld\n"                 // Texto que mostrará el resultado de la suma
+msg_sub:        .asciz "Resta: %ld\n"                // Texto que mostrará el resultado de la resta
+msg_mul:        .asciz "Multiplicación: %ld\n"       // Texto que mostrará el resultado de la multiplicación
+msg_div:        .asciz "División: %ld\n"             // Texto que mostrará el resultado de la división
+msg_div_zero:   .asciz "Error: División por cero\n"  // Mensaje de advertencia para la división por cero
+fmt_int:        .asciz "%ld"                         // Formato para leer valores enteros
+
+        .text
+        .global main
+main:
+        // Guardar el estado inicial del programa
+        stp x29, x30, [sp, -16]!  // Almacenar el puntero de marco y la dirección de retorno en la pila
+        mov x29, sp               // Configurar el puntero de marco
+        sub sp, sp, #16           // Reservar espacio en la pila para dos enteros
+
+        // Mostrar el mensaje para pedir el primer número
+        ldr x0, =msg_prompt1       // Cargar la dirección del mensaje para pedir el primer número
+        bl printf                  // Llamar a printf para mostrar el mensaje
+        ldr x0, =fmt_int           // Cargar el formato para leer un número entero
+        mov x1, sp                 // Apuntar al espacio de la pila donde se almacenará el primer número
+        bl scanf                   // Llamar a scanf para leer el número ingresado por el usuario
+
+        // Mostrar el mensaje para pedir el segundo número
+        ldr x0, =msg_prompt2       // Cargar la dirección del mensaje para pedir el segundo número
+        bl printf                  // Llamar a printf para mostrar el mensaje
+        ldr x0, =fmt_int           // Cargar el formato para leer otro número entero
+        add x1, sp, #8             // Apuntar al espacio en la pila donde se almacenará el segundo número
+        bl scanf                   // Llamar a scanf para leer el segundo número
+
+        // Cargar los números ingresados para las operaciones aritméticas
+        ldr x0, [sp]               // Cargar el primer número desde la pila en el registro x0
+        ldr x1, [sp, #8]           // Cargar el segundo número desde la pila en el registro x1
+
+        // Sumar los dos números
+        add x2, x0, x1             // Almacenar el resultado de la suma en x2
+        ldr x0, =msg_sum           // Cargar el mensaje para mostrar el resultado de la suma
+        mov x1, x2                 // Mover el resultado de la suma al registro x1 para imprimirlo
+        bl printf                  // Llamar a printf para mostrar el resultado de la suma
+
+        // Restar los dos números
+        sub x2, x0, x1             // Calcular la resta y almacenar el resultado en x2
+        ldr x0, =msg_sub           // Cargar el mensaje para mostrar el resultado de la resta
+        mov x1, x2                 // Mover el resultado de la resta a x1 para imprimirlo
+        bl printf                  // Llamar a printf para mostrar el resultado de la resta
+
+        // Multiplicar los dos números
+        mul x2, x0, x1             // Realizar la multiplicación y guardar el resultado en x2
+        ldr x0, =msg_mul           // Cargar el mensaje para mostrar el resultado de la multiplicación
+        mov x1, x2                 // Mover el resultado de la multiplicación al registro x1 para imprimirlo
+        bl printf                  // Llamar a printf para mostrar el resultado de la multiplicación
+
+        // Verificar si el divisor es cero antes de dividir
+        cmp x1, #0                 // Comparar el segundo número con cero
+        b.eq div_by_zero           // Si el divisor es cero, saltar al manejo de error
+        udiv x2, x0, x1            // Realizar la división y almacenar el resultado en x2
+        ldr x0, =msg_div           // Cargar el mensaje para mostrar el resultado de la división
+        mov x1, x2                 // Mover el resultado de la división al registro x1 para imprimirlo
+        bl printf                  // Llamar a printf para mostrar el resultado de la división
+        b end                      // Saltar al final del programa
+
+div_by_zero:
+        // Manejar el error de división por cero
+        ldr x0, =msg_div_zero      // Cargar el mensaje de error para la división por cero
+        bl printf                  // Mostrar el mensaje de error
+
+end:
+        // Finalizar el programa
+        add sp, sp, #16            // Recuperar el espacio reservado en la pila
+        ldp x29, x30, [sp], 16     // Restaurar el puntero de marco y la dirección de retorno
+        ret                        // Retornar para finalizar el programa
